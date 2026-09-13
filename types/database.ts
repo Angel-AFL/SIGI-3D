@@ -12,6 +12,7 @@ export interface Database {
       push_subscriptions: {
         Row: {
           id: string;
+          user_id: string;
           endpoint: string;
           p256dh: string;
           auth: string;
@@ -20,6 +21,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          user_id: string;
           endpoint: string;
           p256dh: string;
           auth: string;
@@ -28,6 +30,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          user_id?: string;
           endpoint?: string;
           p256dh?: string;
           auth?: string;

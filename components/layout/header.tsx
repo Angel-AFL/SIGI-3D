@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { User, Wifi, WifiOff } from "lucide-react";
+import { Wifi, WifiOff } from "lucide-react";
 import { useOffline } from "next/offline";
+import { UserMenu } from "@/components/auth/user-menu";
 import { cn } from "@/lib/utils";
 
-export function Header() {
+export function Header({ email }: { email: string }) {
   const isOffline = useOffline();
 
   return (
@@ -34,13 +35,7 @@ export function Header() {
           {isOffline ? "Sin conexión" : "Online"}
         </span>
 
-        <Link
-          href="/ajustes"
-          aria-label="Ajustes"
-          className="flex size-9 items-center justify-center rounded-full border border-zinc-300 text-zinc-500 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          <User className="size-4" aria-hidden="true" />
-        </Link>
+        <UserMenu email={email} />
       </div>
     </header>
   );
