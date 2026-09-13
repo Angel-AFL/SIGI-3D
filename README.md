@@ -4,15 +4,25 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 
 ## 📌 Estado del proyecto
 
-> **Fase actual: scaffold inicial.** El repositorio contiene la base de Next.js (App Router), TypeScript y Tailwind CSS. La lógica de negocio, la integración con Supabase y el chatbot aún no están implementados.
+> **Fase actual: base de PWA lista.** El proyecto ya es una PWA instalable (manifest, iconos, service worker y modo offline), con notificaciones push persistidas en Supabase. La lógica de negocio de los módulos y el chatbot aún no están implementados.
 
 - [x] Base de Next.js (App Router) + TypeScript
 - [x] Tailwind CSS v4 configurado
-- [ ] Integración con Supabase
+- [x] Integración con Supabase (clientes de navegador y servidor)
+- [x] PWA instalable (manifest, iconos y metadata)
+- [x] Service worker con soporte offline
+- [x] Notificaciones push (Web Push + VAPID)
 - [ ] Módulos funcionales (inventario, pedidos, visor 3D, producción)
 - [ ] Chatbot DeepSeek
 
 ## ✨ Funciones
+
+### Implementadas
+
+- PWA instalable en escritorio y móvil (manifest, iconos y modo `standalone`).
+- Funcionamiento offline básico mediante service worker y página `/offline`.
+- Notificaciones push (Web Push + VAPID) con suscripciones persistidas en Supabase.
+- Página de ajustes (`/ajustes`) para instalar la app y gestionar las notificaciones.
 
 ### Planificadas (Roadmap)
 
@@ -74,31 +84,42 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 
 Crea un archivo `.env.local` a partir de `.env.example` con las siguientes claves:
 
-| Variable                        | Descripción                                               |
-| ------------------------------- | --------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | URL del proyecto de Supabase.                             |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anónima pública de Supabase.                        |
-| `DEEPSEEK_API_KEY`              | Clave de API de DeepSeek para el chatbot (solo servidor). |
+| Variable                            | Descripción                                                                  |
+| ----------------------------------- | ---------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`          | URL del proyecto de Supabase.                                                |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave pública (o `anon key` legacy). Visible en el cliente.               |
+| `SUPABASE_SECRET_KEY`               | Clave secreta (o `service_role` legacy) para el servidor.                    |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`      | Clave pública VAPID para Web Push.                                           |
+| `VAPID_PRIVATE_KEY`                 | Clave privada VAPID para firmar notificaciones (solo servidor).              |
+| `VAPID_SUBJECT`                     | Contacto `mailto:` para el servicio de push.                                 |
+| `DEEPSEEK_API_KEY`                  | Clave de API de DeepSeek para el chatbot (solo servidor).                    |
 
 > Las variables con prefijo `NEXT_PUBLIC_` son visibles en el cliente. No expongas secretos con ese prefijo.
+> Las claves VAPID se generan con `npx web-push generate-vapid-keys`.
 
 ## 📜 Scripts disponibles
 
-| Comando         | Descripción                           |
-| --------------- | ------------------------------------- |
-| `npm run dev`   | Inicia el servidor de desarrollo.     |
-| `npm run build` | Genera la compilación de producción.  |
-| `npm run start` | Ejecuta la compilación de producción. |
-| `npm run lint`  | Ejecuta ESLint sobre el código.       |
+| Comando         | Descripción                                        |
+| --------------- | -------------------------------------------------- |
+| `npm run dev`   | Inicia el servidor de desarrollo.                  |
+| `npm run build` | Genera la compilación de producción.               |
+| `npm run start` | Ejecuta la compilación de producción.              |
+| `npm run lint`  | Ejecuta ESLint sobre el código.                    |
+| `npm run icons` | Regenera los iconos de la PWA desde `logo.png`.    |
 
 ## 📁 Estructura del proyecto
 
 ```
 sigi-3d/
 ├─ app/
-│  ├─ layout.tsx                    # Layout raíz
+│  ├─ layout.tsx                    # Layout raíz (metadata PWA + service worker)
 │  ├─ page.tsx                      # Landing / redirect a /dashboard
 │  ├─ globals.css                   # Estilos globales (Tailwind)
+│  ├─ manifest.ts                   # Web App Manifest (PWA)
+│  ├─ icon.png / apple-icon.png     # Iconos generados
+│  ├─ actions.ts                    # Server Actions (suscripción y envío push)
+│  ├─ ajustes/page.tsx              # Instalación PWA + notificaciones
+│  ├─ offline/page.tsx              # Fallback sin conexión
 │  ├─ (app)/                        # Route group con layout del dashboard
 │  │  ├─ layout.tsx                 # Sidebar + Header + ChatWidget
 │  │  ├─ dashboard/page.tsx         # Estadísticas generales
@@ -109,36 +130,58 @@ sigi-3d/
 │  └─ api/
 │     └─ chat/route.ts              # Proxy seguro a DeepSeek
 ├─ components/
+│  ├─ pwa/                          # register-sw, offline-banner, push-manager, install-prompt
 │  ├─ ui/                           # Primitivas reutilizables (Button, Card, Modal...)
 │  ├─ layout/                       # Sidebar, Header, ChatWidget
 │  ├─ inventory/                    # Componentes de inventario
 │  ├─ orders/                       # KanbanBoard, Column, OrderCard
 │  ├─ viewer/                       # Visor STL
 │  └─ production/                   # Componentes de producción en serie
+├─ hooks/
+│  └─ use-client-value.ts           # Valores solo-cliente sin hydration mismatch
 ├─ lib/
 │  ├─ supabase/
 │  │  ├─ client.ts                  # Cliente de navegador
 │  │  └─ server.ts                  # Cliente para RSC / route handlers
+│  ├─ push.ts                       # Envío de notificaciones Web Push
 │  ├─ deepseek.ts                   # Integración con la API de DeepSeek
 │  └─ utils.ts                      # Utilidades compartidas
-├─ hooks/                           # Hooks personalizados (useFilaments, useOrders...)
 ├─ types/
-│  └─ database.ts                   # Tipos generados de Supabase
+│  └─ database.ts                   # Tipos de Supabase
 ├─ supabase/
 │  └─ migrations/                   # Migraciones SQL del esquema
+├─ scripts/
+│  └─ generate-icons.mjs            # Genera los iconos PWA desde public/logo.png
 ├─ public/
+│  ├─ sw.js                         # Service worker (offline + push)
+│  ├─ logo.png                      # Logo fuente
+│  ├─ icon-192x192.png              # Iconos PWA
+│  ├─ icon-512x512.png
+│  ├─ icon-maskable-512x512.png
 │  └─ models/                       # Modelos STL de ejemplo
 ├─ .env.example                     # Plantilla de variables de entorno
 └─ README.md
 ```
 
-> Las carpetas de `components/`, `lib/`, `hooks/`, `types/` y `supabase/` son la estructura propuesta; se irán creando a medida que se implementen los módulos.
+> La base de la PWA (`app/manifest.ts`, `app/offline`, `components/pwa`, `public/sw.js`, `lib/push.ts`) ya existe. Las carpetas del dashboard (`app/(app)`, `components/ui`, `inventory`, `orders`, `viewer`, `production`) son la estructura propuesta para los módulos pendientes.
+
+## 📱 PWA
+
+La aplicación es instalable y funciona como app nativa en modo `standalone`.
+
+- **Instalar:** desde el navegador (Chrome/Edge) o en iOS mediante Compartir → "Añadir a pantalla de inicio". También hay controles en `/ajustes`.
+- **Offline:** el service worker (`public/sw.js`) cachea el shell y muestra `/offline` cuando no hay conexión. Solo se registra en producción, así que pruébalo con `npm run build && npm run start`.
+- **Notificaciones push:** requieren claves VAPID y la tabla `push_subscriptions` en Supabase. Se gestionan desde `/ajustes`.
+- **Iconos:** se generan desde `public/logo.png` con `npm run icons` (192, 512 y maskable, más `app/icon.png` y `app/apple-icon.png`).
+- **Aplicar el esquema:** ejecuta `supabase/migrations/0001_push_subscriptions.sql` en el SQL Editor de Supabase.
+
+> **Brave:** bloquea el push por defecto. Activa "Use Google services for push messaging" en `brave://settings/privacy`, o usa Chrome/Edge.
 
 ## ☁️ Despliegue en Vercel
 
 1. Sube el repositorio a GitHub.
 2. Importa el proyecto en [Vercel](https://vercel.com/new).
-3. Configura las variables de entorno (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `DEEPSEEK_API_KEY`).
+3. Configura las variables de entorno (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `DEEPSEEK_API_KEY`).
 4. Despliega. Vercel detecta Next.js automáticamente.
 
 Consulta la [documentación de despliegue de Next.js](https://nextjs.org/docs/app/building-your-application/deploying) para más detalles.
