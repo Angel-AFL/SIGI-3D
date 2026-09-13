@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "Sistema Inteligente para la Gestión de Impresoras 3D: inventario de filamentos, pedidos, visor de modelos STL y producción en serie.",
     lang: "es",
-    start_url: "/",
+    start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
