@@ -1,6 +1,6 @@
 # SIGI 3D
 
-SIGI 3D es un Sistema Inteligente para la Gestión de Impresoras 3D. El problema a resolver es la falta de un control centralizado, la gestión de material (como PLA, PLA+ o PETG), la falta de control del flujo de pedidos, además de la necesidad de contar con un espacio para almacenar y visualizar modelos 3D sin necesidad de software especializado.
+SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impresoras 3D. El problema a resolver es la falta de un control centralizado, la gestión de material (como PLA, PLA+ o PETG), la falta de control del flujo de pedidos, además de la necesidad de contar con un espacio para almacenar y visualizar modelos 3D sin necesidad de software especializado.
 
 ## 📌 Estado del proyecto
 
