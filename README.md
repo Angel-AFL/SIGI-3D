@@ -4,7 +4,7 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 
 ## 📌 Estado del proyecto
 
-> **Fase actual: base de PWA lista.** El proyecto ya es una PWA instalable (manifest, iconos, service worker y modo offline), con notificaciones push persistidas en Supabase. La lógica de negocio de los módulos y el chatbot aún no están implementados.
+> **Fase actual: base de PWA lista + autenticación.** El proyecto ya es una PWA instalable (manifest, iconos, service worker y modo offline), con notificaciones push persistidas en Supabase y autenticación de usuarios con Supabase Auth. La lógica de negocio de los módulos y el chatbot aún no están implementados.
 
 - [x] Base de Next.js (App Router) + TypeScript
 - [x] Tailwind CSS v4 configurado
@@ -12,6 +12,7 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 - [x] PWA instalable (manifest, iconos y metadata)
 - [x] Service worker con soporte offline
 - [x] Notificaciones push (Web Push + VAPID)
+- [x] Autenticación con Supabase Auth (email + contraseña)
 - [ ] Módulos funcionales (inventario, pedidos, visor 3D, producción)
 - [ ] Chatbot DeepSeek
 
@@ -20,8 +21,9 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 ### Implementadas
 
 - PWA instalable en escritorio y móvil (manifest, iconos y modo `standalone`).
+- Autenticación con Supabase Auth (email + contraseña), registro abierto y protección de todas las rutas del panel.
 - Funcionamiento offline básico mediante service worker y página `/offline`.
-- Notificaciones push (Web Push + VAPID) con suscripciones persistidas en Supabase.
+- Notificaciones push (Web Push + VAPID) con suscripciones persistidas en Supabase y asociadas a cada usuario.
 - Página de ajustes (`/ajustes`) para instalar la app y gestionar las notificaciones.
 
 ### Planificadas (Roadmap)
@@ -111,6 +113,7 @@ Crea un archivo `.env.local` a partir de `.env.example` con las siguientes clave
 
 ```
 sigi-3d/
+├─ proxy.ts                          # Proxy (middleware de Next 16): refresca sesión y protege rutas
 ├─ app/
 │  ├─ layout.tsx                    # Layout raíz (metadata PWA + service worker)
 │  ├─ page.tsx                      # Landing / redirect a /dashboard
@@ -120,8 +123,14 @@ sigi-3d/
 │  ├─ actions.ts                    # Server Actions (suscripción y envío push)
 │  ├─ ajustes/page.tsx              # Instalación PWA + notificaciones
 │  ├─ offline/page.tsx              # Fallback sin conexión
-│  ├─ (app)/                        # Route group con layout del dashboard
-│  │  ├─ layout.tsx                 # Sidebar + Header + ChatWidget
+│  ├─ (auth)/                       # Route group público (login / registro)
+│  │  ├─ layout.tsx                 # Layout centrado con branding
+│  │  ├─ actions.ts                 # Server Actions de auth (signIn, signUp, signOut)
+│  │  ├─ login/page.tsx             # Inicio de sesión
+│  │  └─ registro/page.tsx          # Registro de cuenta
+│  ├─ auth/callback/route.ts        # Intercambio de código (confirmación por email)
+│  ├─ (app)/                        # Route group con layout del dashboard (protegido)
+│  │  ├─ layout.tsx                 # Verifica sesión + Sidebar + Header + ChatWidget
 │  │  ├─ dashboard/page.tsx         # Estadísticas generales
 │  │  ├─ inventario/page.tsx        # Filamentos y gramaje
 │  │  ├─ pedidos/page.tsx           # Tablero Kanban
@@ -131,8 +140,10 @@ sigi-3d/
 │     └─ chat/route.ts              # Proxy seguro a DeepSeek
 ├─ components/
 │  ├─ pwa/                          # register-sw, offline-banner, push-manager, install-prompt
+│  ├─ auth/                         # LoginForm, SignupForm, UserMenu
 │  ├─ ui/                           # Primitivas reutilizables (Button, Card, Modal...)
 │  ├─ layout/                       # Sidebar, Header, ChatWidget
+│  ├─ dashboard/                    # Componentes del dashboard
 │  ├─ inventory/                    # Componentes de inventario
 │  ├─ orders/                       # KanbanBoard, Column, OrderCard
 │  ├─ viewer/                       # Visor STL
@@ -140,9 +151,12 @@ sigi-3d/
 ├─ hooks/
 │  └─ use-client-value.ts           # Valores solo-cliente sin hydration mismatch
 ├─ lib/
+│  ├─ auth.ts                       # DAL de autenticación (getUser, requireUser)
 │  ├─ supabase/
 │  │  ├─ client.ts                  # Cliente de navegador
-│  │  └─ server.ts                  # Cliente para RSC / route handlers
+│  │  ├─ server.ts                  # Cliente para RSC / Server Actions (cookies + RLS)
+│  │  ├─ admin.ts                   # Cliente service role (solo servidor)
+│  │  └─ proxy.ts                   # Helper de sesión para proxy.ts
 │  ├─ push.ts                       # Envío de notificaciones Web Push
 │  ├─ deepseek.ts                   # Integración con la API de DeepSeek
 │  └─ utils.ts                      # Utilidades compartidas
@@ -165,15 +179,34 @@ sigi-3d/
 
 > La base de la PWA (`app/manifest.ts`, `app/offline`, `components/pwa`, `public/sw.js`, `lib/push.ts`) ya existe. Las carpetas del dashboard (`app/(app)`, `components/ui`, `inventory`, `orders`, `viewer`, `production`) son la estructura propuesta para los módulos pendientes.
 
+## 🔐 Autenticación
+
+SIGI 3D usa **Supabase Auth** (email + contraseña) con sesiones basadas en cookies mediante `@supabase/ssr`.
+
+- **Registro abierto:** cualquiera puede crear una cuenta en `/registro`.
+- **Rutas públicas:** `/login`, `/registro`, `/auth/callback` y `/offline`.
+- **Rutas protegidas:** todo el panel (`/dashboard`, `/inventario`, `/pedidos`, `/produccion`, `/modelos`) y `/ajustes`. `proxy.ts` refresca la sesión y redirige a `/login` si no hay sesión; los layouts y páginas vuelven a verificarla en el servidor como defensa en profundidad.
+- **Cerrar sesión:** desde el menú de usuario en la cabecera.
+
+### Configuración en Supabase
+
+1. En **Authentication → Providers**, habilita **Email**.
+2. En **Authentication → URL Configuration**, define:
+   - **Site URL:** `http://localhost:3000` (o tu dominio de producción).
+   - **Redirect URLs:** añade `http://localhost:3000/auth/callback` y `https://tu-dominio/auth/callback`.
+3. Decide si dejas **Confirm email** activado (recomendado con registro abierto). Si lo desactivas, el usuario entra directamente tras registrarse.
+
+> Las suscripciones push se asocian al usuario autenticado. Aplica las migraciones `0001` y `0002` de `supabase/migrations/` en el SQL Editor de Supabase.
+
 ## 📱 PWA
 
 La aplicación es instalable y funciona como app nativa en modo `standalone`.
 
 - **Instalar:** desde el navegador (Chrome/Edge) o en iOS mediante Compartir → "Añadir a pantalla de inicio". También hay controles en `/ajustes`.
 - **Offline:** el service worker (`public/sw.js`) cachea el shell y muestra `/offline` cuando no hay conexión. Solo se registra en producción, así que pruébalo con `npm run build && npm run start`.
-- **Notificaciones push:** requieren claves VAPID y la tabla `push_subscriptions` en Supabase. Se gestionan desde `/ajustes`.
+- **Notificaciones push:** requieren claves VAPID y la tabla `push_subscriptions` en Supabase. Se gestionan desde `/ajustes` y quedan vinculadas al usuario autenticado.
 - **Iconos:** se generan desde `public/logo.png` con `npm run icons` (192, 512 y maskable, más `app/icon.png` y `app/apple-icon.png`).
-- **Aplicar el esquema:** ejecuta `supabase/migrations/0001_push_subscriptions.sql` en el SQL Editor de Supabase.
+- **Aplicar el esquema:** ejecuta `supabase/migrations/0001_push_subscriptions.sql` y `supabase/migrations/0002_push_subscriptions_user.sql` en el SQL Editor de Supabase.
 
 > **Brave:** bloquea el push por defecto. Activa "Use Google services for push messaging" en `brave://settings/privacy`, o usa Chrome/Edge.
 

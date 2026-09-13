@@ -1,4 +1,4 @@
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `sigi-static-${VERSION}`;
 const PAGES_CACHE = `sigi-pages-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -53,6 +53,12 @@ function isStaticAsset(pathname) {
   );
 }
 
+// Solo se cachean navegaciones públicas. El HTML autenticado nunca se guarda
+// para no servir la sesión de un usuario a otro (o tras cerrar sesión).
+function isCacheableNavigation(pathname) {
+  return pathname === OFFLINE_URL;
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
@@ -70,8 +76,10 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(PAGES_CACHE).then((cache) => cache.put(request, copy));
+          if (!DEV_MODE && isCacheableNavigation(url.pathname)) {
+            const copy = response.clone();
+            caches.open(PAGES_CACHE).then((cache) => cache.put(request, copy));
+          }
           return response;
         })
         .catch(async () => {
@@ -99,6 +107,12 @@ self.addEventListener("fetch", (event) => {
         return cached || network;
       }),
     );
+  }
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "CLEAR_AUTH_CACHE") {
+    event.waitUntil(caches.delete(PAGES_CACHE));
   }
 });
 

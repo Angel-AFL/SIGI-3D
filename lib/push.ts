@@ -1,5 +1,5 @@
 import webpush, { type PushSubscription } from "web-push";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 export interface PushSubscriptionInput {
   endpoint: string;
@@ -15,6 +15,12 @@ export interface PushPayload {
   body: string;
   url?: string;
   icon?: string;
+}
+
+interface SubscriptionRow {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
 }
 
 let vapidConfigured = false;
@@ -38,28 +44,21 @@ function ensureVapidConfigured() {
   vapidConfigured = true;
 }
 
-export async function sendPushToAll(payload: PushPayload) {
-  ensureVapidConfigured();
-
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("push_subscriptions")
-    .select("endpoint, p256dh, auth");
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (!data || data.length === 0) {
+async function deliver(
+  rows: SubscriptionRow[],
+  payload: PushPayload,
+): Promise<{ sent: number; failed: number }> {
+  if (rows.length === 0) {
     return { sent: 0, failed: 0 };
   }
 
+  const supabase = createAdminSupabaseClient();
   const expiredEndpoints: string[] = [];
   let sent = 0;
   let failed = 0;
 
   await Promise.all(
-    data.map(async (row) => {
+    rows.map(async (row) => {
       const subscription: PushSubscription = {
         endpoint: row.endpoint,
         keys: {
@@ -89,4 +88,35 @@ export async function sendPushToAll(payload: PushPayload) {
   }
 
   return { sent, failed };
+}
+
+export async function sendPushToAll(payload: PushPayload) {
+  ensureVapidConfigured();
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("push_subscriptions")
+    .select("endpoint, p256dh, auth");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return deliver(data ?? [], payload);
+}
+
+export async function sendPushToUser(userId: string, payload: PushPayload) {
+  ensureVapidConfigured();
+
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("push_subscriptions")
+    .select("endpoint, p256dh, auth")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return deliver(data ?? [], payload);
 }

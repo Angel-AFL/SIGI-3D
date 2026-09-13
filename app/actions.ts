@@ -1,13 +1,21 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { sendPushToAll, type PushSubscriptionInput } from "@/lib/push";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function subscribeUser(subscription: PushSubscriptionInput) {
-  const supabase = createServerSupabaseClient();
+  const user = await getUser();
+
+  if (!user) {
+    return { success: false as const, error: "No autenticado" };
+  }
+
+  const supabase = await createServerSupabaseClient();
 
   const { error } = await supabase.from("push_subscriptions").upsert(
     {
+      user_id: user.id,
       endpoint: subscription.endpoint,
       p256dh: subscription.keys.p256dh,
       auth: subscription.keys.auth,
@@ -24,12 +32,19 @@ export async function subscribeUser(subscription: PushSubscriptionInput) {
 }
 
 export async function unsubscribeUser(endpoint: string) {
-  const supabase = createServerSupabaseClient();
+  const user = await getUser();
+
+  if (!user) {
+    return { success: false as const, error: "No autenticado" };
+  }
+
+  const supabase = await createServerSupabaseClient();
 
   const { error } = await supabase
     .from("push_subscriptions")
     .delete()
-    .eq("endpoint", endpoint);
+    .eq("endpoint", endpoint)
+    .eq("user_id", user.id);
 
   if (error) {
     return { success: false as const, error: error.message };
@@ -39,6 +54,12 @@ export async function unsubscribeUser(endpoint: string) {
 }
 
 export async function sendNotification(message: string) {
+  const user = await getUser();
+
+  if (!user) {
+    return { success: false as const, error: "No autenticado" };
+  }
+
   try {
     const result = await sendPushToAll({ title: "SIGI 3D", body: message });
     return { success: true as const, ...result };

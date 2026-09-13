@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { PushManager } from "@/components/pwa/push-manager";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Ajustes",
 };
 
-export default function AjustesPage() {
+export default async function AjustesPage() {
+  await requireUser();
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-1">
