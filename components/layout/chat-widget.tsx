@@ -1,10 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bot, X } from "lucide-react";
 
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    function handleOpen() {
+      setOpen(true);
+    }
+
+    window.addEventListener("sigi:open-chat", handleOpen);
+    return () => window.removeEventListener("sigi:open-chat", handleOpen);
+  }, []);
 
   return (
     <div className="fixed right-4 bottom-20 z-40 flex flex-col items-end gap-3 lg:right-6 lg:bottom-6">
