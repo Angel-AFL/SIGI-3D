@@ -39,6 +39,51 @@ export interface Database {
         };
         Relationships: [];
       };
+      filaments: {
+        Row: {
+          id: string;
+          user_id: string;
+          code: number;
+          material: string;
+          color: string;
+          brand: string;
+          weight_current_g: number;
+          weight_initial_g: number | null;
+          location: string | null;
+          min_stock_g: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          code: number;
+          material: string;
+          color: string;
+          brand: string;
+          weight_current_g?: number;
+          weight_initial_g?: number | null;
+          location?: string | null;
+          min_stock_g?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          code?: number;
+          material?: string;
+          color?: string;
+          brand?: string;
+          weight_current_g?: number;
+          weight_initial_g?: number | null;
+          location?: string | null;
+          min_stock_g?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
