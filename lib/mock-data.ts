@@ -10,7 +10,7 @@ const dashboardData: DashboardData = {
       modelo: "Figura Gnomo",
       color: "Rojo",
       fechaEntrega: "2026-10-26",
-      estado: "en_cola",
+      estado: "cotizado",
     },
     {
       id: "002",
@@ -26,7 +26,7 @@ const dashboardData: DashboardData = {
       modelo: "Figura Gnomo",
       color: "Prata",
       fechaEntrega: "2026-10-28",
-      estado: "en_cola",
+      estado: "cotizado",
     },
     {
       id: "004",
@@ -42,7 +42,7 @@ const dashboardData: DashboardData = {
       modelo: "Figura Gnomo",
       color: "Rojo",
       fechaEntrega: "2026-10-30",
-      estado: "en_cola",
+      estado: "cotizado",
     },
   ],
   alertas: [

@@ -84,6 +84,57 @@ export interface Database {
         };
         Relationships: [];
       };
+      orders: {
+        Row: {
+          id: string;
+          user_id: string;
+          code: number;
+          customer: string;
+          model_name: string;
+          filament_color: string | null;
+          quantity: number;
+          unit_price: number;
+          total: number;
+          delivery_date: string | null;
+          status: string;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          code: number;
+          customer: string;
+          model_name: string;
+          filament_color?: string | null;
+          quantity?: number;
+          unit_price?: number;
+          total?: number;
+          delivery_date?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          code?: number;
+          customer?: string;
+          model_name?: string;
+          filament_color?: string | null;
+          quantity?: number;
+          unit_price?: number;
+          total?: number;
+          delivery_date?: string | null;
+          status?: string;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       models: {
         Row: {
           id: string;
