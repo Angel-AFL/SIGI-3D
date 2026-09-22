@@ -4,7 +4,7 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 
 ## 📌 Estado del proyecto
 
-> **Fase actual: base de PWA lista, autenticación, inventario y visor 3D.** El proyecto ya es una PWA instalable (manifest, iconos, service worker y modo offline), con notificaciones push persistidas en Supabase, autenticación de usuarios con Supabase Auth, el módulo de inventario de filamentos y el visor 3D con carga de modelos STL a Supabase Storage. Los módulos de pedidos, producción y el chatbot aún no están implementados.
+> **Fase actual: base de PWA lista, autenticación, inventario, pedidos y visor 3D.** El proyecto ya es una PWA instalable (manifest, iconos, service worker y modo offline), con notificaciones push persistidas en Supabase, autenticación de usuarios con Supabase Auth, el módulo de inventario de filamentos, el módulo de pedidos con vista de lista y tablero Kanban, y el visor 3D con carga de modelos STL a Supabase Storage. Los módulos de producción y el chatbot aún no están implementados.
 
 - [x] Base de Next.js (App Router) + TypeScript
 - [x] Tailwind CSS v4 configurado
@@ -14,8 +14,9 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 - [x] Notificaciones push (Web Push + VAPID)
 - [x] Autenticación con Supabase Auth (email + contraseña)
 - [x] Módulo de inventario (filamentos, CRUD, consumo y alertas)
+- [x] Módulo de pedidos (vista de lista y tablero Kanban con drag & drop)
 - [x] Módulo de visor 3D (STL, metadatos, miniaturas y visor interactivo)
-- [ ] Módulos de pedidos y producción
+- [ ] Módulo de producción
 - [ ] Chatbot DeepSeek
 
 ## ✨ Funciones
@@ -28,11 +29,11 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 - Notificaciones push (Web Push + VAPID) con suscripciones persistidas en Supabase y asociadas a cada usuario.
 - Página de ajustes (`/ajustes`) para instalar la app y gestionar las notificaciones.
 - Inventario de filamentos por usuario: CRUD de carretes, búsqueda y filtro por estado, y registro de consumo con descuento de gramaje.
+- Pedidos por usuario: CRUD con cliente, modelo, color de filamento, cantidad, precio por unidad, total (MXN) calculado, fecha de entrega, estado y notas; vista de lista o tablero Kanban con arrastrar y soltar para cambiar de estado, búsqueda y filtro.
 - Visor 3D por usuario: carga de modelos STL a Supabase Storage, metadatos (material, tiempo estimado y dimensiones), miniaturas autogeneradas y visor interactivo (rotación, zoom, reset y pantalla completa).
 
 ### Planificadas (Roadmap)
 
-- Tablero Kanban para la gestión del ciclo de vida de los pedidos (cotizado, imprimiendo, entregado).
 - Botón flotante con chatbot impulsado por DeepSeek para consultas rápidas sobre parámetros o stock.
 - Estadísticas esenciales del dashboard general.
 - Módulo de producción en serie para gestionar lotes por camas de impresión y registrar mermas.
@@ -137,7 +138,9 @@ sigi-3d/
 │  │  ├─ inventario/
 │  │  │  ├─ page.tsx                # Filamentos y gramaje
 │  │  │  └─ actions.ts              # Server Actions de inventario (CRUD + consumo)
-│  │  ├─ pedidos/page.tsx           # Tablero Kanban
+│  │  ├─ pedidos/
+│  │  │  ├─ page.tsx                # Vista de lista + tablero Kanban
+│  │  │  └─ actions.ts              # Server Actions de pedidos (CRUD + estado)
 │  │  ├─ modelos/
 │  │  │  ├─ page.tsx                # Galería + visor STL
 │  │  │  └─ actions.ts              # Server Actions de modelos 3D
@@ -151,7 +154,7 @@ sigi-3d/
 │  ├─ layout/                       # Sidebar, Header, ChatWidget
 │  ├─ dashboard/                    # Componentes del dashboard
 │  ├─ inventory/                    # Stats, toolbar, tabla, formulario y consumo
-│  ├─ orders/                       # KanbanBoard, Column, OrderCard
+│  ├─ orders/                       # Stats, toolbar, lista, Kanban, tarjeta y formulario
 │  ├─ viewer/                       # Visor STL, lista, detalles y formulario de modelos
 │  └─ production/                   # Componentes de producción en serie
 ├─ hooks/
@@ -166,6 +169,8 @@ sigi-3d/
 │  ├─ push.ts                       # Envío de notificaciones Web Push
 │  ├─ inventory.ts                  # Acceso a datos del inventario (server-only)
 │  ├─ inventory-utils.ts            # Estado, formato de gramos y % restante
+│  ├─ orders.ts                     # Acceso a datos de pedidos (server-only)
+│  ├─ order-utils.ts                # Estados, etiquetas, fechas y moneda de pedidos
 │  ├─ models.ts                     # Acceso a datos de modelos 3D (server-only)
 │  ├─ viewer-utils.ts               # Formatos de tiempo, dimensiones y tamaño
 │  ├─ stl-client.ts                 # Parseo de STL, dimensiones y miniaturas (cliente)
@@ -174,6 +179,7 @@ sigi-3d/
 ├─ types/
 │  ├─ database.ts                   # Tipos de Supabase
 │  ├─ inventory.ts                  # Tipos del inventario
+│  ├─ orders.ts                     # Tipos de pedidos
 │  └─ viewer.ts                     # Tipos del visor 3D
 ├─ supabase/
 │  └─ migrations/                   # Migraciones SQL del esquema
@@ -189,7 +195,7 @@ sigi-3d/
 └─ README.md
 ```
 
-> La base de la PWA (`app/manifest.ts`, `app/offline`, `components/pwa`, `public/sw.js`, `lib/push.ts`), la autenticación, el módulo de inventario (`app/(app)/inventario`, `components/inventory`, `lib/inventory.ts`) y el visor 3D (`app/(app)/modelos`, `components/viewer`, `lib/models.ts`) ya existen. Las carpetas de pedidos y producción (`components/orders`, `production`) son la estructura propuesta para los módulos pendientes.
+> La base de la PWA (`app/manifest.ts`, `app/offline`, `components/pwa`, `public/sw.js`, `lib/push.ts`), la autenticación, el módulo de inventario (`app/(app)/inventario`, `components/inventory`, `lib/inventory.ts`), el módulo de pedidos (`app/(app)/pedidos`, `components/orders`, `lib/orders.ts`) y el visor 3D (`app/(app)/modelos`, `components/viewer`, `lib/models.ts`) ya existen. La carpeta de producción (`components/production`) es la estructura propuesta para el módulo pendiente.
 
 ## 🔐 Autenticación
 
@@ -208,7 +214,7 @@ SIGI 3D usa **Supabase Auth** (email + contraseña) con sesiones basadas en cook
    - **Redirect URLs:** añade `http://localhost:3000/auth/callback` y `https://tu-dominio/auth/callback`.
 3. Decide si dejas **Confirm email** activado (recomendado con registro abierto). Si lo desactivas, el usuario entra directamente tras registrarse.
 
-> Las suscripciones push se asocian al usuario autenticado. Aplica las migraciones `0001` a `0005` de `supabase/migrations/` en el SQL Editor de Supabase.
+> Las suscripciones push se asocian al usuario autenticado. Aplica las migraciones `0001` a `0006` de `supabase/migrations/` en el SQL Editor de Supabase.
 
 ## 📦 Inventario
 
@@ -220,6 +226,19 @@ El módulo de inventario permite gestionar los carretes de filamento de cada usu
 - **Búsqueda y filtro:** por material, color, marca o ubicación, y por estado.
 - **Aislamiento:** cada usuario ve y gestiona únicamente su propio inventario (RLS por `user_id`).
 - **Esquema:** aplica `supabase/migrations/0003_filaments.sql` en el SQL Editor de Supabase.
+
+## 📋 Pedidos
+
+El módulo de pedidos gestiona el ciclo de vida de los pedidos de cada usuario.
+
+- **Datos por pedido:** cliente, modelo, color de filamento (opcional), cantidad, precio por unidad (MXN), total (MXN, calculado como precio × cantidad), fecha de entrega (opcional), estado y notas (opcional).
+- **Estados:** `Cotizado`, `En impresión` y `Entregado` (los mismos que usa el dashboard).
+- **Vistas:** alterna entre **lista** (tabla en escritorio, tarjetas en móvil) y **tablero Kanban** con una columna por estado. Las notas de cada pedido se muestran (truncadas) en ambas vistas.
+- **Cambio de estado:** arrastrar y soltar entre columnas en el Kanban, o desde el menú de acciones de cada pedido (respaldo táctil en móvil).
+- **Operaciones:** crear, editar y eliminar pedidos, con búsqueda por cliente/modelo/código y filtro por estado.
+- **Estadísticas:** pedidos activos (no entregados) y entregas pendientes (no entregadas con fecha de entrega asignada).
+- **Aislamiento:** cada usuario ve y gestiona únicamente sus propios pedidos (RLS por `user_id`).
+- **Esquema:** aplica `supabase/migrations/0006_orders.sql` en el SQL Editor de Supabase.
 
 ## 🧊 Visor 3D
 
@@ -242,7 +261,7 @@ La aplicación es instalable y funciona como app nativa en modo `standalone`.
 - **Offline:** el service worker (`public/sw.js`) cachea el shell y muestra `/offline` cuando no hay conexión. Solo se registra en producción, así que pruébalo con `npm run build && npm run start`.
 - **Notificaciones push:** requieren claves VAPID y la tabla `push_subscriptions` en Supabase. Se gestionan desde `/ajustes` y quedan vinculadas al usuario autenticado.
 - **Iconos:** se generan desde `public/logo.png` con `npm run icons` (192, 512 y maskable, más `app/icon.png` y `app/apple-icon.png`).
-- **Aplicar el esquema:** ejecuta las migraciones de `supabase/migrations/` (`0001_push_subscriptions.sql`, `0002_push_subscriptions_user.sql`, `0003_filaments.sql`, `0004_models.sql` y `0005_models_storage.sql`) en el SQL Editor de Supabase.
+- **Aplicar el esquema:** ejecuta las migraciones de `supabase/migrations/` (`0001_push_subscriptions.sql`, `0002_push_subscriptions_user.sql`, `0003_filaments.sql`, `0004_models.sql`, `0005_models_storage.sql` y `0006_orders.sql`) en el SQL Editor de Supabase.
 
 > **Brave:** bloquea el push por defecto. Activa "Use Google services for push messaging" en `brave://settings/privacy`, o usa Chrome/Edge.
 

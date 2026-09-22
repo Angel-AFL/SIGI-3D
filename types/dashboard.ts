@@ -1,4 +1,4 @@
-export type OrderStatus = "cotizado" | "en_cola" | "imprimiendo" | "entregado";
+export type OrderStatus = "cotizado" | "imprimiendo" | "entregado";
 
 export type StockStatus = "en_stock" | "bajo_stock" | "agotado";
 

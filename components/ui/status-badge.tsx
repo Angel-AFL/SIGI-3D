@@ -9,11 +9,6 @@ const statusStyles: Record<Status, { label: string; className: string }> = {
     className:
       "border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200",
   },
-  en_cola: {
-    label: "En cola",
-    className:
-      "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200",
-  },
   imprimiendo: {
     label: "Imprimiendo",
     className:
