@@ -18,6 +18,7 @@ export function mapFilament(row: FilamentRow): Filament {
     weightInitialG: row.weight_initial_g,
     location: row.location,
     minStockG: row.min_stock_g,
+    pricePerKg: row.price_per_kg,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

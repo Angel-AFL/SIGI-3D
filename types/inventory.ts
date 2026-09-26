@@ -12,6 +12,7 @@ export interface Filament {
   weightInitialG: number | null;
   location: string | null;
   minStockG: number;
+  pricePerKg: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +25,7 @@ export interface FilamentInput {
   weightInitialG: number | null;
   location: string | null;
   minStockG: number;
+  pricePerKg: number | null;
 }
 
 export interface InventoryStats {

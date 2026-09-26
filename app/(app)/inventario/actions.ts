@@ -13,6 +13,7 @@ type ValidatedInput = {
   weightInitialG: number | null;
   location: string | null;
   minStockG: number;
+  pricePerKg: number | null;
 };
 
 function toColumns(value: ValidatedInput) {
@@ -24,6 +25,7 @@ function toColumns(value: ValidatedInput) {
     weight_initial_g: value.weightInitialG,
     location: value.location,
     min_stock_g: value.minStockG,
+    price_per_kg: value.pricePerKg,
   };
 }
 
@@ -54,6 +56,9 @@ function validateInput(
     rawInitial === null || rawInitial === undefined
       ? null
       : toNumber(rawInitial);
+  const rawPrice = input.pricePerKg;
+  const pricePerKg =
+    rawPrice === null || rawPrice === undefined ? null : toNumber(rawPrice);
 
   if (!material || !color || !brand) {
     return { ok: false, error: "Material, color y marca son obligatorios." };
@@ -75,6 +80,17 @@ function validateInput(
     return { ok: false, error: "El peso inicial debe ser un número mayor o igual a 0." };
   }
 
+  if (
+    rawPrice !== null &&
+    rawPrice !== undefined &&
+    (pricePerKg === null || pricePerKg < 0)
+  ) {
+    return {
+      ok: false,
+      error: "El precio por kg debe ser un número mayor o igual a 0.",
+    };
+  }
+
   return {
     ok: true,
     value: {
@@ -85,6 +101,7 @@ function validateInput(
       weightInitialG,
       location,
       minStockG,
+      pricePerKg,
     },
   };
 }

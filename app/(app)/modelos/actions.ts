@@ -62,6 +62,11 @@ export async function createModel(
     return { success: false, error: "El tiempo estimado no puede ser negativo." };
   }
 
+  const weightGrams = toOptionalNumber(input.weightGrams);
+  if (weightGrams !== null && weightGrams < 0) {
+    return { success: false, error: "El peso no puede ser negativo." };
+  }
+
   const dimensions = validateDimensions(input.dimensions);
   if (dimensions === false) {
     return { success: false, error: "Las dimensiones del modelo no son válidas." };
@@ -86,6 +91,7 @@ export async function createModel(
     name,
     material,
     estimated_minutes: estimatedMinutes,
+    weight_grams: weightGrams,
     dimensions_x: dimensions?.x ?? null,
     dimensions_y: dimensions?.y ?? null,
     dimensions_z: dimensions?.z ?? null,
@@ -119,6 +125,11 @@ export async function updateModel(
     return { success: false, error: "El tiempo estimado no puede ser negativo." };
   }
 
+  const weightGrams = toOptionalNumber(input.weightGrams);
+  if (weightGrams !== null && weightGrams < 0) {
+    return { success: false, error: "El peso no puede ser negativo." };
+  }
+
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
 
@@ -128,6 +139,7 @@ export async function updateModel(
       name,
       material,
       estimated_minutes: estimatedMinutes,
+      weight_grams: weightGrams,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

@@ -28,6 +28,11 @@ export function ModelFormModal({ onClose, model, userId }: ModelFormModalProps) 
   const [estimatedMinutes, setEstimatedMinutes] = useState(
     model?.estimatedMinutes ? String(model.estimatedMinutes) : "",
   );
+  const [weightGrams, setWeightGrams] = useState(
+    model?.weightGrams !== null && model?.weightGrams !== undefined
+      ? String(model.weightGrams)
+      : "",
+  );
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -56,6 +61,7 @@ export function ModelFormModal({ onClose, model, userId }: ModelFormModalProps) 
 
     const minutes =
       estimatedMinutes.trim() === "" ? null : Number(estimatedMinutes);
+    const grams = weightGrams.trim() === "" ? null : Number(weightGrams);
 
     setBusy(true);
 
@@ -64,6 +70,7 @@ export function ModelFormModal({ onClose, model, userId }: ModelFormModalProps) 
         name: trimmedName,
         material: trimmedMaterial,
         estimatedMinutes: minutes,
+        weightGrams: grams,
       });
 
       if (!result.success) {
@@ -137,6 +144,7 @@ export function ModelFormModal({ onClose, model, userId }: ModelFormModalProps) 
       name: trimmedName,
       material: trimmedMaterial,
       estimatedMinutes: minutes,
+      weightGrams: grams,
       dimensions,
       filePath,
       fileName: file.name,
@@ -191,7 +199,7 @@ export function ModelFormModal({ onClose, model, userId }: ModelFormModalProps) 
             </datalist>
           </label>
 
-          <label className="flex flex-col gap-1.5 sm:col-span-2">
+          <label className="flex flex-col gap-1.5">
             <span className={labelClass}>Tiempo estimado (min)</span>
             <Input
               type="number"
@@ -200,6 +208,18 @@ export function ModelFormModal({ onClose, model, userId }: ModelFormModalProps) 
               value={estimatedMinutes}
               onChange={(event) => setEstimatedMinutes(event.target.value)}
               placeholder="Opcional"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className={labelClass}>Peso por pieza (g)</span>
+            <Input
+              type="number"
+              min="0"
+              step="0.1"
+              value={weightGrams}
+              onChange={(event) => setWeightGrams(event.target.value)}
+              placeholder="Opcional (del slicer)"
             />
           </label>
         </div>
