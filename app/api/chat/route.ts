@@ -45,11 +45,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const stream = await streamAssistantReply(rawMessages as ChatMessage[]);
+    const stream = streamAssistantReply(rawMessages as ChatMessage[]);
 
     return new Response(stream, {
       headers: {
-        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Type": "application/x-ndjson; charset=utf-8",
         "Cache-Control": "no-store",
       },
     });

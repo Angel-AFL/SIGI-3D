@@ -1,5 +1,5 @@
 import type { OrderStatus } from "@/types/dashboard";
-import type { BatchStatus } from "@/types/production";
+import type { BatchStatus, PrinterStatus } from "@/types/production";
 
 export type ChatRole = "user" | "assistant";
 
@@ -35,6 +35,26 @@ export interface AssistantModelSummary {
   weightGrams: number | null;
 }
 
+export interface AssistantFilamentSummary {
+  code: number;
+  material: string;
+  color: string;
+  brand: string;
+  weightCurrentG: number;
+  pricePerKg: number | null;
+}
+
+export interface AssistantPrinterSummary {
+  code: number;
+  name: string;
+  status: PrinterStatus;
+  bedX: number | null;
+  bedY: number | null;
+  bedZ: number | null;
+  nozzleDiameter: number;
+  costPerHour: number;
+}
+
 export interface AssistantStats {
   pedidosActivos: number;
   entregasPendientes: number;
@@ -52,5 +72,19 @@ export interface AssistantContext {
   orders: Record<OrderStatus, AssistantOrderSummary[]>;
   batches: Record<BatchStatus, AssistantBatchSummary[]>;
   models: AssistantModelSummary[];
+  filaments: AssistantFilamentSummary[];
+  printers: AssistantPrinterSummary[];
   stats: AssistantStats;
 }
+
+export type AssistantStreamEvent =
+  | { type: "text"; value: string }
+  | {
+      type: "tool";
+      name: string;
+      label: string;
+      status: "running" | "ok" | "error";
+      summary?: string;
+    }
+  | { type: "done" }
+  | { type: "error"; message: string };
