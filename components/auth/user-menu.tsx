@@ -1,12 +1,20 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LogOut, Settings, User } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import { clearAuthCaches } from "@/lib/auth-cache";
 
-export function UserMenu({ email }: { email: string }) {
+export function UserMenu({
+  email,
+  avatarUrl,
+}: {
+  email: string;
+  avatarUrl: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -31,14 +39,33 @@ export function UserMenu({ email }: { email: string }) {
         onClick={() => setOpen((value) => !value)}
         aria-label="Cuenta"
         aria-expanded={open}
-        className="flex size-9 items-center justify-center rounded-full border border-zinc-300 text-zinc-500 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="flex size-9 items-center justify-center overflow-hidden rounded-full border border-zinc-300 text-zinc-500 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
       >
-        <User className="size-4" aria-hidden="true" />
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="Foto de perfil"
+            className="size-full object-cover"
+          />
+        ) : (
+          <User className="size-4" aria-hidden="true" />
+        )}
       </button>
 
       {open ? (
         <div className="absolute right-0 z-40 mt-2 w-56 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
+          <div className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
+            <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-400 dark:bg-zinc-800">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                <User className="size-4" aria-hidden="true" />
+              )}
+            </span>
             <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
               {email}
             </p>

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { PushManager } from "@/components/pwa/push-manager";
 import { DeleteAccount } from "@/components/settings/delete-account";
+import { ProfilePhoto } from "@/components/settings/profile-photo";
 import { requireUser } from "@/lib/auth";
+import { getAvatarUrl } from "@/lib/profile";
 
 export const metadata: Metadata = {
   title: "Ajustes",
@@ -21,6 +23,13 @@ export default async function AjustesPage() {
           Instala SIGI 3D en tu dispositivo y activa las notificaciones.
         </p>
       </header>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
+          Foto de perfil
+        </h2>
+        <ProfilePhoto avatarUrl={getAvatarUrl(user)} />
+      </section>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
