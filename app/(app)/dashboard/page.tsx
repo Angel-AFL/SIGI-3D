@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { AlertTriangle, Printer } from "lucide-react";
+import { AlertTriangle, ListOrdered } from "lucide-react";
 import { UpcomingOrders } from "@/components/dashboard/upcoming-orders";
 import { StatCard } from "@/components/ui/stat-card";
-import { getDashboardData } from "@/lib/mock-data";
+import { getDashboardData } from "@/lib/dashboard";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -19,7 +19,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <StatCard
-          icon={Printer}
+          icon={ListOrdered}
           label="Impresiones activas"
           value={data.impresionesActivas}
           actionLabel="Ver detalles"
