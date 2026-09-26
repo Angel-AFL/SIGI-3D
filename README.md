@@ -4,7 +4,7 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 
 ## 📌 Estado del proyecto
 
-> **Fase actual: base de PWA lista, autenticación, inventario, pedidos, visor 3D y producción.** El proyecto ya es una PWA instalable (manifest, iconos, service worker y modo offline), con notificaciones push persistidas en Supabase, autenticación de usuarios con Supabase Auth, el módulo de inventario de filamentos, el módulo de pedidos con vista de lista y tablero Kanban, el visor 3D con carga de modelos STL a Supabase Storage y el módulo de producción como planificador de lotes con costos y mermas. El chatbot aún no está implementado.
+> **Fase actual: base de PWA lista, autenticación, inventario, pedidos, visor 3D, producción y asistente IA.** El proyecto ya es una PWA instalable (manifest, iconos, service worker y modo offline), con notificaciones push persistidas en Supabase, autenticación de usuarios con Supabase Auth, el módulo de inventario de filamentos, el módulo de pedidos con vista de lista y tablero Kanban, el visor 3D con carga de modelos STL a Supabase Storage, el módulo de producción como planificador de lotes con costos y mermas, y el asistente de IA con DeepSeek integrado en un widget flotante.
 
 - [x] Base de Next.js (App Router) + TypeScript
 - [x] Tailwind CSS v4 configurado
@@ -17,7 +17,7 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 - [x] Módulo de pedidos (vista de lista y tablero Kanban con drag & drop)
 - [x] Módulo de visor 3D (STL, metadatos, miniaturas y visor interactivo)
 - [x] Módulo de producción (planificador de lotes, costos y mermas)
-- [ ] Chatbot DeepSeek
+- [x] Asistente de IA con DeepSeek (widget flotante)
 
 ## ✨ Funciones
 
@@ -32,10 +32,10 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 - Pedidos por usuario: CRUD con cliente, modelo, color de filamento, cantidad, precio por unidad, total (MXN) calculado, fecha de entrega, estado y notas; vista de lista o tablero Kanban con arrastrar y soltar para cambiar de estado, búsqueda y filtro.
 - Visor 3D por usuario: carga de modelos STL a Supabase Storage, metadatos (material, tiempo estimado, peso por pieza y dimensiones), miniaturas autogeneradas y visor interactivo (rotación, zoom, reset y pantalla completa).
 - Producción por usuario: perfiles de impresora (tamaño de cama, boquilla y costo/hora) y lotes de producción con cálculo de piezas por cama, camas, tiempo, filamento y costo; estados manuales, mermas y descuento automático de inventario al completar.
+- Asistente de IA por usuario: widget flotante con chat en streaming que responde en español sobre pedidos por estado, lotes de producción, modelos del catálogo y estadísticas generales, usando los datos reales del usuario autenticado (solo lectura).
 
 ### Planificadas (Roadmap)
 
-- Botón flotante con chatbot impulsado por DeepSeek para consultas rápidas sobre parámetros o stock.
 - Estadísticas esenciales del dashboard general.
 - Sincronización en vivo con la impresora (OctoPrint / Klipper).
 
@@ -98,7 +98,8 @@ Crea un archivo `.env.local` a partir de `.env.example` con las siguientes clave
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`      | Clave pública VAPID para Web Push.                                           |
 | `VAPID_PRIVATE_KEY`                 | Clave privada VAPID para firmar notificaciones (solo servidor).              |
 | `VAPID_SUBJECT`                     | Contacto `mailto:` para el servicio de push.                                 |
-| `DEEPSEEK_API_KEY`                  | Clave de API de DeepSeek para el chatbot (solo servidor).                    |
+| `DEEPSEEK_API_KEY`                  | Clave de API de DeepSeek para el asistente (solo servidor).                  |
+| `DEEPSEEK_MODEL`                    | Opcional. Modelo de DeepSeek a usar. Por defecto `deepseek-v4-flash`.        |
 
 > Las variables con prefijo `NEXT_PUBLIC_` son visibles en el cliente. No expongas secretos con ese prefijo.
 > Las claves VAPID se generan con `npx web-push generate-vapid-keys`.
@@ -201,7 +202,7 @@ sigi-3d/
 └─ README.md
 ```
 
-> La base de la PWA (`app/manifest.ts`, `app/offline`, `components/pwa`, `public/sw.js`, `lib/push.ts`), la autenticación, el módulo de inventario (`app/(app)/inventario`, `components/inventory`, `lib/inventory.ts`), el módulo de pedidos (`app/(app)/pedidos`, `components/orders`, `lib/orders.ts`), el visor 3D (`app/(app)/modelos`, `components/viewer`, `lib/models.ts`) y el módulo de producción (`app/(app)/produccion`, `components/production`, `lib/production.ts`) ya existen. El chatbot DeepSeek aún está pendiente.
+> La base de la PWA (`app/manifest.ts`, `app/offline`, `components/pwa`, `public/sw.js`, `lib/push.ts`), la autenticación, el módulo de inventario (`app/(app)/inventario`, `components/inventory`, `lib/inventory.ts`), el módulo de pedidos (`app/(app)/pedidos`, `components/orders`, `lib/orders.ts`), el visor 3D (`app/(app)/modelos`, `components/viewer`, `lib/models.ts`), el módulo de producción (`app/(app)/produccion`, `components/production`, `lib/production.ts`) y el asistente de IA (`app/api/chat`, `lib/deepseek.ts`, `components/layout/chat-widget.tsx`) ya existen.
 
 ## 🔐 Autenticación
 
@@ -255,7 +256,6 @@ El módulo del visor permite cargar y previsualizar modelos STL sin software de 
 - **Visor:** canvas interactivo con `three.js` + `@react-three/fiber`; rotación, zoom, reset de cámara y pantalla completa.
 - **Galería:** búsqueda por nombre/material y filtro por material, con estadísticas de modelos cargados y vistas recientes.
 - **Operaciones:** editar metadatos y eliminar el modelo (borra el STL y la miniatura del Storage).
-- **Asistente IA:** el botón del visor abre el `ChatWidget` (el chatbot DeepSeek aún está pendiente).
 - **Aislamiento:** cada usuario ve y gestiona únicamente sus propios modelos (RLS por `user_id` y políticas de Storage por carpeta `{user_id}/…`).
 - **Esquema:** aplica `supabase/migrations/0004_models.sql` y `supabase/migrations/0005_models_storage.sql` en el SQL Editor de Supabase (esta última crea el bucket privado `models`).
 
@@ -274,6 +274,19 @@ El módulo de producción es un **planificador de lotes** que calcula camas, tie
 - **Aislamiento:** cada usuario ve y gestiona únicamente sus propios perfiles y lotes (RLS por `user_id`).
 - **Esquema:** aplica `supabase/migrations/0007_production.sql` y `supabase/migrations/0008_production_planner.sql` en el SQL Editor de Supabase (esta última convierte las máquinas en perfiles, crea `production_batches`, añade `models.weight_grams` y `filaments.price_per_kg`, y elimina la tabla `print_jobs`).
 
+## 🤖 Asistente IA
+
+El asistente es un widget flotante disponible en todo el panel que responde en español sobre los datos reales del usuario.
+
+- **Activación:** botón flotante en la esquina inferior, disponible en todo el panel.
+- **Consultas:** pedidos agrupados por estado (`Cotizado`, `En impresión`, `Entregado`), lotes de producción por estado (`En cola`, `Imprimiendo`, `Completado`, `Fallido`), modelos del catálogo y estadísticas generales (pedidos activos, entregas pendientes, lotes activos, alertas de stock, filamento requerido y costo estimado).
+- **Contexto:** en cada consulta el servidor arma un resumen de los datos del usuario autenticado y lo inyecta en el prompt del sistema, por lo que las respuestas siempre reflejan el estado actual. El historial de la conversación vive en memoria del widget y se pierde al recargar.
+- **Solo lectura:** el asistente no crea, edita ni elimina registros; solo informa.
+- **Seguridad:** la clave de DeepSeek nunca sale del servidor. La ruta `app/api/chat` valida la sesión y responde `401` sin autenticación (además del bloqueo de `proxy.ts`).
+- **Streaming:** la respuesta se muestra token a token; `lib/deepseek.ts` convierte el flujo SSE de DeepSeek en texto plano.
+- **Modelo:** por defecto `deepseek-v4-flash` (configurable con `DEEPSEEK_MODEL`).
+- **Configuración:** define `DEEPSEEK_API_KEY` en `.env.local`. Sin ella, el widget muestra un error indicándolo.
+
 ## 📱 PWA
 
 La aplicación es instalable y funciona como app nativa en modo `standalone`.
@@ -290,7 +303,7 @@ La aplicación es instalable y funciona como app nativa en modo `standalone`.
 
 1. Sube el repositorio a GitHub.
 2. Importa el proyecto en [Vercel](https://vercel.com/new).
-3. Configura las variables de entorno (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `DEEPSEEK_API_KEY`).
+3. Configura las variables de entorno (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `DEEPSEEK_API_KEY` y, opcionalmente, `DEEPSEEK_MODEL`).
 4. Despliega. Vercel detecta Next.js automáticamente.
 
 Consulta la [documentación de despliegue de Next.js](https://nextjs.org/docs/app/building-your-application/deploying) para más detalles.
