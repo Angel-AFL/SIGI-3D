@@ -6,7 +6,13 @@ import { useOffline } from "next/offline";
 import { UserMenu } from "@/components/auth/user-menu";
 import { cn } from "@/lib/utils";
 
-export function Header({ email }: { email: string }) {
+export function Header({
+  email,
+  avatarUrl,
+}: {
+  email: string;
+  avatarUrl: string | null;
+}) {
   const isOffline = useOffline();
 
   return (
@@ -35,7 +41,7 @@ export function Header({ email }: { email: string }) {
           {isOffline ? "Sin conexión" : "Online"}
         </span>
 
-        <UserMenu email={email} />
+        <UserMenu email={email} avatarUrl={avatarUrl} />
       </div>
     </header>
   );

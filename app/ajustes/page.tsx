@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { PushManager } from "@/components/pwa/push-manager";
+import { DeleteAccount } from "@/components/settings/delete-account";
+import { ProfilePhoto } from "@/components/settings/profile-photo";
 import { requireUser } from "@/lib/auth";
+import { getAvatarUrl } from "@/lib/profile";
 
 export const metadata: Metadata = {
   title: "Ajustes",
 };
 
 export default async function AjustesPage() {
-  await requireUser();
+  const user = await requireUser();
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-12">
@@ -23,6 +26,13 @@ export default async function AjustesPage() {
 
       <section className="flex flex-col gap-4">
         <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
+          Foto de perfil
+        </h2>
+        <ProfilePhoto avatarUrl={getAvatarUrl(user)} />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
           Instalación
         </h2>
         <InstallPrompt />
@@ -33,6 +43,13 @@ export default async function AjustesPage() {
           Notificaciones push
         </h2>
         <PushManager />
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-xl border border-red-300 p-4 dark:border-red-900">
+        <h2 className="text-lg font-medium text-red-600 dark:text-red-400">
+          Zona de peligro
+        </h2>
+        <DeleteAccount email={user.email ?? ""} />
       </section>
     </main>
   );
