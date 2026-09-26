@@ -4,6 +4,7 @@ import { FilamentRowActions } from "@/components/inventory/filament-row-actions"
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatGrams, getFilamentStatus } from "@/lib/inventory-utils";
+import { formatCurrency } from "@/lib/order-utils";
 import type { Filament } from "@/types/inventory";
 
 interface FilamentTableProps {
@@ -34,6 +35,7 @@ export function FilamentTable({
               <th className="px-4 py-3 font-medium">Color</th>
               <th className="px-4 py-3 font-medium">Marca</th>
               <th className="px-4 py-3 font-medium">Peso actual (g)</th>
+              <th className="px-4 py-3 font-medium">Precio/kg</th>
               <th className="px-4 py-3 font-medium">Ubicación</th>
               <th className="px-4 py-3 font-medium">Estado</th>
               <th className="px-4 py-3 text-right font-medium">Acciones</th>
@@ -53,6 +55,11 @@ export function FilamentTable({
                 <td className="px-4 py-3">{filament.brand}</td>
                 <td className="px-4 py-3">
                   {formatGrams(filament.weightCurrentG)}
+                </td>
+                <td className="px-4 py-3">
+                  {filament.pricePerKg === null
+                    ? "—"
+                    : `${formatCurrency(filament.pricePerKg)}/kg`}
                 </td>
                 <td className="px-4 py-3">
                   {filament.location ?? "—"}

@@ -32,6 +32,7 @@ function mapModel(row: ModelRow, urlByPath: Map<string, string>): Model3D {
     name: row.name,
     material: row.material,
     estimatedMinutes: row.estimated_minutes,
+    weightGrams: row.weight_grams,
     dimensions: mapDimensions(row),
     fileName: row.file_name,
     fileSizeBytes: row.file_size_bytes,

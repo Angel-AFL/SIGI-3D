@@ -4,6 +4,7 @@ import { getFilaments } from "@/lib/inventory";
 import { getFilamentStatus } from "@/lib/inventory-utils";
 import { isActiveOrder } from "@/lib/order-utils";
 import { getOrders } from "@/lib/orders";
+import { getProductionStats } from "@/lib/production";
 import type {
   DashboardData,
   StockAlert,
@@ -13,7 +14,11 @@ import type {
 const MAX_UPCOMING_ORDERS = 5;
 
 export async function getDashboardData(): Promise<DashboardData> {
-  const [orders, filaments] = await Promise.all([getOrders(), getFilaments()]);
+  const [orders, filaments, production] = await Promise.all([
+    getOrders(),
+    getFilaments(),
+    getProductionStats(),
+  ]);
 
   const pedidosEnCola: UpcomingOrder[] = orders
     .filter((order) => isActiveOrder(order) && order.deliveryDate !== null)
@@ -44,7 +49,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     }));
 
   return {
-    impresionesActivas: orders.filter(isActiveOrder).length,
+    lotesActivos: production.queuedBatches + production.printingBatches,
     alertasStock: alertas.length,
     pedidosEnCola,
     alertas,

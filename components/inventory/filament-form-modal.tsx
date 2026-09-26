@@ -33,6 +33,11 @@ export function FilamentFormModal({
   );
   const [location, setLocation] = useState(filament?.location ?? "");
   const [minStockG, setMinStockG] = useState(String(filament?.minStockG ?? 250));
+  const [pricePerKg, setPricePerKg] = useState(
+    filament?.pricePerKg === null || filament?.pricePerKg === undefined
+      ? ""
+      : String(filament.pricePerKg),
+  );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -49,6 +54,7 @@ export function FilamentFormModal({
       weightInitialG: weightInitialG.trim() === "" ? null : Number(weightInitialG),
       location: location.trim() === "" ? null : location,
       minStockG: Number(minStockG),
+      pricePerKg: pricePerKg.trim() === "" ? null : Number(pricePerKg),
     };
 
     const result = filament
@@ -142,7 +148,7 @@ export function FilamentFormModal({
             />
           </label>
 
-          <label className="flex flex-col gap-1.5 sm:col-span-2">
+          <label className="flex flex-col gap-1.5">
             <span className={labelClass}>Mínimo de stock (g)</span>
             <Input
               type="number"
@@ -151,6 +157,18 @@ export function FilamentFormModal({
               value={minStockG}
               onChange={(event) => setMinStockG(event.target.value)}
               required
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className={labelClass}>Precio por kg (MXN)</span>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={pricePerKg}
+              onChange={(event) => setPricePerKg(event.target.value)}
+              placeholder="Opcional"
             />
           </label>
         </div>

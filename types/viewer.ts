@@ -10,6 +10,7 @@ export interface Model3D {
   name: string;
   material: string;
   estimatedMinutes: number | null;
+  weightGrams: number | null;
   dimensions: ModelDimensions | null;
   fileName: string;
   fileSizeBytes: number | null;
@@ -24,6 +25,7 @@ export interface Model3DInput {
   name: string;
   material: string;
   estimatedMinutes: number | null;
+  weightGrams: number | null;
   dimensions: ModelDimensions | null;
   filePath: string;
   fileName: string;
@@ -35,6 +37,7 @@ export interface Model3DUpdateInput {
   name: string;
   material: string;
   estimatedMinutes: number | null;
+  weightGrams: number | null;
 }
 
 export interface Model3DStats {

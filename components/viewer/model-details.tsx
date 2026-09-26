@@ -3,6 +3,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { formatGrams } from "@/lib/inventory-utils";
 import { formatDimensions, formatEstimatedTime } from "@/lib/viewer-utils";
 import type { Model3D } from "@/types/viewer";
 
@@ -24,6 +25,10 @@ export function ModelDetails({
     { label: "Dimensiones", value: formatDimensions(model.dimensions) },
     { label: "Material", value: model.material },
     { label: "Tiempo estimado", value: formatEstimatedTime(model.estimatedMinutes) },
+    {
+      label: "Peso por pieza",
+      value: model.weightGrams === null ? "—" : formatGrams(model.weightGrams),
+    },
     { label: "Cargado por", value: ownerEmail || "—" },
   ];
 

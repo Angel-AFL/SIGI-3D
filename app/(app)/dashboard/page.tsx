@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AlertTriangle, ListOrdered } from "lucide-react";
+import { AlertTriangle, Factory } from "lucide-react";
 import { UpcomingOrders } from "@/components/dashboard/upcoming-orders";
 import { StatCard } from "@/components/ui/stat-card";
 import { getDashboardData } from "@/lib/dashboard";
@@ -19,9 +19,9 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <StatCard
-          icon={ListOrdered}
-          label="Impresiones activas"
-          value={data.impresionesActivas}
+          icon={Factory}
+          label="Lotes activos"
+          value={data.lotesActivos}
           actionLabel="Ver detalles"
           actionHref="/produccion"
         />

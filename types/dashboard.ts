@@ -21,7 +21,7 @@ export interface StockAlert {
 }
 
 export interface DashboardData {
-  impresionesActivas: number;
+  lotesActivos: number;
   alertasStock: number;
   pedidosEnCola: UpcomingOrder[];
   alertas: StockAlert[];
