@@ -1,77 +1,163 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Bot, Loader2, RotateCcw, Send, X } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  AlertCircle,
+  Bot,
+  CheckCircle2,
+  Loader2,
+  RotateCcw,
+  Send,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Markdown } from "@/components/ui/markdown";
-import type { ChatMessage } from "@/types/assistant";
+import type { AssistantStreamEvent, ChatMessage } from "@/types/assistant";
 
 const SUGGESTIONS: { label: string; prompt: string }[] = [
   { label: "Pedidos en impresión", prompt: "¿Qué pedidos están en impresión?" },
   { label: "Lotes en cola", prompt: "Muéstrame los lotes en cola." },
-  { label: "Modelos disponibles", prompt: "¿Qué modelos tengo disponibles?" },
+  { label: "¿Qué puedes hacer?", prompt: "¿Qué acciones puedes ejecutar?" },
   { label: "Resumen general", prompt: "Dame un resumen general del sistema." },
 ];
 
-function MessageBubble({
-  message,
-  streaming,
-}: {
-  message: ChatMessage;
-  streaming: boolean;
-}) {
-  const isUser = message.role === "user";
+interface ToolActivity {
+  name: string;
+  label: string;
+  status: "running" | "ok" | "error";
+  summary?: string;
+}
 
-  if (!isUser && message.content === "") {
-    return (
-      <div className="flex items-center gap-2 self-start rounded-2xl rounded-bl-sm bg-zinc-100 px-3 py-2 text-sm text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        Pensando…
-      </div>
-    );
-  }
+interface ChatEntry {
+  role: "user" | "assistant";
+  content: string;
+  tools?: ToolActivity[];
+}
 
+function ToolChips({ tools }: { tools: ToolActivity[] }) {
   return (
-    <div
-      className={
-        isUser
-          ? "max-w-[85%] self-end rounded-2xl rounded-br-sm bg-brand px-3 py-2 text-sm text-white"
-          : "max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-zinc-100 px-3 py-2 text-sm text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"
-      }
-    >
-      {isUser ? (
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
-      ) : (
-        <>
-          <Markdown content={message.content} />
-          {streaming ? (
-            <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-zinc-400 align-middle dark:bg-zinc-500" />
-          ) : null}
-        </>
-      )}
+    <div className="flex flex-col gap-1.5 self-start">
+      {tools.map((tool, index) => (
+        <div
+          key={`${tool.name}-${index}`}
+          className="flex max-w-[85%] items-start gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-300"
+        >
+          {tool.status === "running" ? (
+            <Loader2
+              className="mt-0.5 size-3.5 shrink-0 animate-spin text-zinc-400"
+              aria-hidden="true"
+            />
+          ) : tool.status === "ok" ? (
+            <CheckCircle2
+              className="mt-0.5 size-3.5 shrink-0 text-emerald-500"
+              aria-hidden="true"
+            />
+          ) : (
+            <AlertCircle
+              className="mt-0.5 size-3.5 shrink-0 text-red-500"
+              aria-hidden="true"
+            />
+          )}
+          <span>
+            {tool.status === "running"
+              ? `${tool.label}…`
+              : (tool.summary ?? tool.label)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ThinkingBubble() {
+  return (
+    <div className="flex items-center gap-2 self-start rounded-2xl rounded-bl-sm bg-zinc-100 px-3 py-2 text-sm text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+      Pensando…
     </div>
   );
 }
 
 export function ChatWidget() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const usedToolRef = useRef(false);
 
   useEffect(() => {
     if (open) {
       bottomRef.current?.scrollIntoView({ block: "end" });
     }
-  }, [messages, open, loading]);
+  }, [entries, open, loading]);
 
   useEffect(() => {
     return () => abortRef.current?.abort();
   }, []);
+
+  function appendText(value: string) {
+    setEntries((previous) => {
+      const next = [...previous];
+      const last = next[next.length - 1];
+
+      if (last && last.role === "assistant") {
+        next[next.length - 1] = { ...last, content: last.content + value };
+      }
+
+      return next;
+    });
+  }
+
+  function addToolRunning(event: Extract<AssistantStreamEvent, { type: "tool" }>) {
+    usedToolRef.current = true;
+
+    setEntries((previous) => {
+      const next = [...previous];
+      const last = next[next.length - 1];
+
+      if (last && last.role === "assistant") {
+        const tools = [
+          ...(last.tools ?? []),
+          { name: event.name, label: event.label, status: "running" as const },
+        ];
+        next[next.length - 1] = { ...last, tools };
+      }
+
+      return next;
+    });
+  }
+
+  function finishTool(event: Extract<AssistantStreamEvent, { type: "tool" }>) {
+    setEntries((previous) => {
+      const next = [...previous];
+      const last = next[next.length - 1];
+
+      if (last && last.role === "assistant" && last.tools) {
+        const tools = [...last.tools];
+
+        for (let index = tools.length - 1; index >= 0; index -= 1) {
+          if (tools[index].name === event.name && tools[index].status === "running") {
+            tools[index] = {
+              ...tools[index],
+              status: event.status === "error" ? "error" : "ok",
+              summary: event.summary,
+            };
+            break;
+          }
+        }
+
+        next[next.length - 1] = { ...last, tools };
+      }
+
+      return next;
+    });
+  }
 
   async function send(text: string) {
     const content = text.trim();
@@ -80,16 +166,51 @@ export function ChatWidget() {
       return;
     }
 
-    const userMessage: ChatMessage = { role: "user", content };
-    const history = [...messages, userMessage];
+    const userEntry: ChatEntry = { role: "user", content };
+    const history: ChatMessage[] = [...entries, userEntry]
+      .filter((entry) => entry.content.trim() !== "")
+      .map((entry) => ({ role: entry.role, content: entry.content }));
 
-    setMessages([...history, { role: "assistant", content: "" }]);
+    setEntries((previous) => [
+      ...previous,
+      userEntry,
+      { role: "assistant", content: "", tools: [] },
+    ]);
     setInput("");
     setError(null);
     setLoading(true);
+    usedToolRef.current = false;
 
     const controller = new AbortController();
     abortRef.current = controller;
+
+    function handleEvent(line: string) {
+      const trimmed = line.trim();
+
+      if (trimmed === "") {
+        return;
+      }
+
+      let event: AssistantStreamEvent;
+
+      try {
+        event = JSON.parse(trimmed) as AssistantStreamEvent;
+      } catch {
+        return;
+      }
+
+      if (event.type === "text") {
+        appendText(event.value);
+      } else if (event.type === "tool") {
+        if (event.status === "running") {
+          addToolRunning(event);
+        } else {
+          finishTool(event);
+        }
+      } else if (event.type === "error") {
+        setError(event.message);
+      }
+    }
 
     try {
       const response = await fetch("/api/chat", {
@@ -116,7 +237,7 @@ export function ChatWidget() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      const parts: string[] = [];
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -125,17 +246,17 @@ export function ChatWidget() {
           break;
         }
 
-        parts.push(decoder.decode(value, { stream: true }));
-        const accumulated = parts.join("");
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
 
-        setMessages((previous) => {
-          const next = [...previous];
-          next[next.length - 1] = {
-            role: "assistant",
-            content: accumulated,
-          };
-          return next;
-        });
+        for (const line of lines) {
+          handleEvent(line);
+        }
+      }
+
+      if (buffer.trim() !== "") {
+        handleEvent(buffer);
       }
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") {
@@ -145,10 +266,14 @@ export function ChatWidget() {
       setError(
         caught instanceof Error ? caught.message : "Error desconocido",
       );
-      setMessages((previous) => {
+      setEntries((previous) => {
         const last = previous[previous.length - 1];
 
-        if (last?.role === "assistant" && last.content === "") {
+        if (
+          last?.role === "assistant" &&
+          last.content === "" &&
+          (last.tools?.length ?? 0) === 0
+        ) {
           return previous.slice(0, -1);
         }
 
@@ -157,13 +282,18 @@ export function ChatWidget() {
     } finally {
       setLoading(false);
       abortRef.current = null;
+
+      if (usedToolRef.current) {
+        usedToolRef.current = false;
+        router.refresh();
+      }
     }
   }
 
   function resetConversation() {
     abortRef.current?.abort();
     abortRef.current = null;
-    setMessages([]);
+    setEntries([]);
     setError(null);
     setLoading(false);
   }
@@ -183,7 +313,7 @@ export function ChatWidget() {
               </p>
             </div>
             <div className="flex items-center gap-1">
-              {messages.length > 0 ? (
+              {entries.length > 0 ? (
                 <button
                   type="button"
                   onClick={resetConversation}
@@ -208,10 +338,11 @@ export function ChatWidget() {
             className="flex min-h-[16rem] max-h-[60vh] flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-4"
             aria-live="polite"
           >
-            {messages.length === 0 ? (
+            {entries.length === 0 ? (
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Pregúntame por tus pedidos, lotes, modelos o estadísticas.
+                  Pregúntame por tus pedidos, lotes, modelos o estadísticas, o
+                  pídeme que ejecute una acción.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {SUGGESTIONS.map((suggestion) => (
@@ -227,17 +358,43 @@ export function ChatWidget() {
                 </div>
               </div>
             ) : (
-              messages.map((message, index) => (
-                <MessageBubble
-                  key={index}
-                  message={message}
-                  streaming={
-                    loading &&
-                    index === messages.length - 1 &&
-                    message.role === "assistant"
-                  }
-                />
-              ))
+              entries.map((entry, index) => {
+                const isLast = index === entries.length - 1;
+                const streamingHere =
+                  loading && isLast && entry.role === "assistant";
+
+                if (entry.role === "user") {
+                  return (
+                    <div
+                      key={index}
+                      className="max-w-[85%] self-end rounded-2xl rounded-br-sm bg-brand px-3 py-2 text-sm text-white"
+                    >
+                      <p className="break-words whitespace-pre-wrap">
+                        {entry.content}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Fragment key={index}>
+                    {entry.content !== "" ? (
+                      <div className="max-w-[85%] self-start rounded-2xl rounded-bl-sm bg-zinc-100 px-3 py-2 text-sm text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100">
+                        <Markdown content={entry.content} />
+                        {streamingHere ? (
+                          <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-zinc-400 align-middle dark:bg-zinc-500" />
+                        ) : null}
+                      </div>
+                    ) : streamingHere && (entry.tools?.length ?? 0) === 0 ? (
+                      <ThinkingBubble />
+                    ) : null}
+
+                    {entry.tools && entry.tools.length > 0 ? (
+                      <ToolChips tools={entry.tools} />
+                    ) : null}
+                  </Fragment>
+                );
+              })
             )}
 
             {error ? (
@@ -259,7 +416,7 @@ export function ChatWidget() {
             <Input
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              placeholder="Escribe tu pregunta…"
+              placeholder="Escribe tu mensaje…"
               aria-label="Mensaje para el asistente"
               autoFocus
               disabled={loading}

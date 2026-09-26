@@ -32,7 +32,7 @@ SIGI 3D es un PWA, el cual es un Sistema Inteligente para la Gestión de Impreso
 - Pedidos por usuario: CRUD con cliente, modelo, color de filamento, cantidad, precio por unidad, total (MXN) calculado, fecha de entrega, estado y notas; vista de lista o tablero Kanban con arrastrar y soltar para cambiar de estado, búsqueda y filtro.
 - Visor 3D por usuario: carga de modelos STL a Supabase Storage, metadatos (material, tiempo estimado, peso por pieza y dimensiones), miniaturas autogeneradas y visor interactivo (rotación, zoom, reset y pantalla completa).
 - Producción por usuario: perfiles de impresora (tamaño de cama, boquilla y costo/hora) y lotes de producción con cálculo de piezas por cama, camas, tiempo, filamento y costo; estados manuales, mermas y descuento automático de inventario al completar.
-- Asistente de IA por usuario: widget flotante con chat en streaming que responde en español sobre pedidos por estado, lotes de producción, modelos del catálogo y estadísticas generales, usando los datos reales del usuario autenticado (solo lectura).
+- Asistente de IA por usuario: widget flotante con chat en streaming que responde en español sobre pedidos por estado, lotes de producción, modelos del catálogo, inventario y estadísticas generales, y que además **ejecuta acciones** (crear pedidos, cambiar estados, crear lotes, registrar consumo, crear carretes y gestionar perfiles de impresora) mediante tool calling, usando los datos reales del usuario autenticado.
 
 ### Planificadas (Roadmap)
 
@@ -180,7 +180,8 @@ sigi-3d/
 │  ├─ stl-client.ts                 # Parseo de STL, dimensiones y miniaturas (cliente)
 │  ├─ production.ts                 # Acceso a datos de producción (server-only)
 │  ├─ production-utils.ts           # Nesting, estimación de gramos, costos y formatos
-│  ├─ deepseek.ts                   # Integración con la API de DeepSeek
+│  ├─ deepseek.ts                   # Integración con la API de DeepSeek (agente + tool calling)
+│  ├─ assistant-tools.ts            # Herramientas del asistente (esquemas y ejecución)
 │  └─ utils.ts                      # Utilidades compartidas
 ├─ types/
 │  ├─ database.ts                   # Tipos de Supabase
@@ -280,10 +281,15 @@ El asistente es un widget flotante disponible en todo el panel que responde en e
 
 - **Activación:** botón flotante en la esquina inferior, disponible en todo el panel.
 - **Consultas:** pedidos agrupados por estado (`Cotizado`, `En impresión`, `Entregado`), lotes de producción por estado (`En cola`, `Imprimiendo`, `Completado`, `Fallido`), modelos del catálogo y estadísticas generales (pedidos activos, entregas pendientes, lotes activos, alertas de stock, filamento requerido y costo estimado).
-- **Contexto:** en cada consulta el servidor arma un resumen de los datos del usuario autenticado y lo inyecta en el prompt del sistema, por lo que las respuestas siempre reflejan el estado actual. El historial de la conversación vive en memoria del widget y se pierde al recargar.
-- **Solo lectura:** el asistente no crea, edita ni elimina registros; solo informa.
-- **Seguridad:** la clave de DeepSeek nunca sale del servidor. La ruta `app/api/chat` valida la sesión y responde `401` sin autenticación (además del bloqueo de `proxy.ts`).
-- **Streaming:** la respuesta se muestra token a token; `lib/deepseek.ts` convierte el flujo SSE de DeepSeek en texto plano.
+- **Contexto:** en cada consulta el servidor arma un resumen de los datos del usuario autenticado (pedidos, lotes, modelos, carretes y perfiles de impresora) y lo inyecta en el prompt del sistema, por lo que las respuestas siempre reflejan el estado actual. El historial de la conversación vive en memoria del widget y se pierde al recargar.
+- **Acciones (tool calling):** además de responder, el asistente puede ejecutar acciones reales:
+  - Pedidos: crear y cambiar estado.
+  - Producción: crear lotes (calcula piezas por cama, gramos y tiempo desde el modelo y la impresora), cambiar estado y marcar fallidos con merma.
+  - Inventario: registrar consumo de filamento y crear carretes.
+  - Perfiles de impresora: crear y editar.
+  Las acciones se resuelven por código (ej. `#012`), reutilizan las Server Actions del sistema (misma validación y aislamiento por `user_id`) y se anuncian como chips en el chat. Al completarse, la página se refresca automáticamente. **No se permite eliminar registros** desde el asistente.
+- **Seguridad:** la clave de DeepSeek nunca sale del servidor. La ruta `app/api/chat` valida la sesión y responde `401` sin autenticación (además del bloqueo de `proxy.ts`). Solo se ejecutan herramientas de una lista permitida y hay un límite de rondas por mensaje.
+- **Streaming:** la respuesta se muestra token a token. `lib/deepseek.ts` convierte el flujo SSE de DeepSeek en eventos NDJSON (`text`, `tool`, `done`, `error`) que el widget consume.
 - **Modelo:** por defecto `deepseek-v4-flash` (configurable con `DEEPSEEK_MODEL`).
 - **Configuración:** define `DEEPSEEK_API_KEY` en `.env.local`. Sin ella, el widget muestra un error indicándolo.
 
