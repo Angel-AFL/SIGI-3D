@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Bot, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { deleteModel, markModelViewed } from "@/app/(app)/modelos/actions";
 import { ModelDetails } from "@/components/viewer/model-details";
 import { ModelFormModal } from "@/components/viewer/model-form-modal";
@@ -168,7 +168,7 @@ export function ViewerView({
                 onSelect={handleSelect}
               />
 
-              <div className="relative">
+              <div>
                 {selected.fileUrl ? (
                   <StlViewer url={selected.fileUrl} name={selected.name} />
                 ) : (
@@ -176,22 +176,6 @@ export function ViewerView({
                     Vista previa no disponible para este modelo.
                   </Card>
                 )}
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    window.dispatchEvent(new CustomEvent("sigi:open-chat"))
-                  }
-                  aria-label="Abrir IA Asistente (DeepSeek)"
-                  className="absolute right-3 bottom-3 flex flex-col items-center gap-1"
-                >
-                  <span className="flex size-12 items-center justify-center rounded-full bg-brand text-white shadow-lg transition-colors hover:bg-brand-hover">
-                    <Bot className="size-6" aria-hidden="true" />
-                  </span>
-                  <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 backdrop-blur dark:bg-zinc-900/90 dark:text-zinc-300">
-                    IA Asistente
-                  </span>
-                </button>
               </div>
 
               <div className="col-span-full xl:col-span-1">
