@@ -10,7 +10,11 @@ import {
   updatePrinterProfile,
 } from "@/app/(app)/produccion/actions";
 import { getFilaments } from "@/lib/inventory";
-import { ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/lib/order-utils";
+import {
+  formatCurrency,
+  ORDER_STATUSES,
+  ORDER_STATUS_LABELS,
+} from "@/lib/order-utils";
 import { getOrders } from "@/lib/orders";
 import {
   getModelOptions,
@@ -24,6 +28,14 @@ import {
   PRINTER_STATUSES,
   unitsPerBed,
 } from "@/lib/production-utils";
+import {
+  formatGrams,
+  formatPercent,
+  formatReportDecimal,
+  parseReportRange,
+  REPORT_RANGES,
+} from "@/lib/report-utils";
+import { getReportData } from "@/lib/reports";
 import type { OrderStatus } from "@/types/dashboard";
 import type {
   BatchStatus,
@@ -302,6 +314,26 @@ export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_financial_summary",
+      description:
+        "Consulta el resumen financiero y de producción del usuario para un periodo: ingresos entregados, pipeline, costo de producción, margen, ticket promedio, filamento consumido, horas de impresora, tasa de éxito y merma. Es de solo lectura.",
+      parameters: {
+        type: "object",
+        properties: {
+          range: {
+            type: "string",
+            enum: REPORT_RANGES,
+            description:
+              "Periodo a consultar: mes (por defecto), 30d, 90d, anio o todo.",
+          },
+        },
+        required: [],
+      },
+    },
+  },
 ];
 
 export const TOOL_LABELS: Record<string, string> = {
@@ -314,6 +346,7 @@ export const TOOL_LABELS: Record<string, string> = {
   create_filament: "Creando carrete",
   create_printer_profile: "Creando perfil de impresora",
   update_printer_profile: "Editando perfil de impresora",
+  get_financial_summary: "Consultando reportes",
 };
 
 export interface ToolExecutionResult {
@@ -715,6 +748,31 @@ async function runUpdatePrinterProfile(
   return ok(`Perfil ${padCode(code)} actualizado.`);
 }
 
+async function runGetFinancialSummary(
+  args: Record<string, unknown>,
+): Promise<ToolExecutionResult> {
+  const range = parseReportRange(asString(args.range));
+  const report = await getReportData(range);
+  const { kpis } = report;
+
+  return ok(
+    [
+      `Reporte (${report.label}):`,
+      `ingresos entregados ${formatCurrency(kpis.revenue)}`,
+      `costo de producción estimado ${formatCurrency(kpis.productionCost)}`,
+      `margen bruto ${formatCurrency(kpis.grossMargin)} (${formatPercent(kpis.marginPercent)})`,
+      `${kpis.deliveredOrders} pedidos entregados`,
+      `ticket promedio ${formatCurrency(kpis.averageTicket)}`,
+      `pipeline activo ${formatCurrency(kpis.pipeline)}`,
+      `${formatGrams(kpis.consumedGrams)} de filamento consumido`,
+      `${formatReportDecimal(kpis.printerHours)} h de impresora`,
+      `tasa de éxito ${formatPercent(kpis.successRate)}`,
+      `merma ${formatGrams(kpis.wasteGrams)}`,
+      `${kpis.finishedBatches} lotes finalizados`,
+    ].join("; ") + ".",
+  );
+}
+
 export async function executeAssistantTool(
   name: string,
   rawArguments: string,
@@ -750,6 +808,8 @@ export async function executeAssistantTool(
       return runCreatePrinterProfile(args);
     case "update_printer_profile":
       return runUpdatePrinterProfile(args);
+    case "get_financial_summary":
+      return runGetFinancialSummary(args);
     default:
       return fail(`La acción "${name}" no está disponible.`);
   }
