@@ -12,6 +12,7 @@ export interface Order {
   unitPrice: number;
   total: number;
   deliveryDate: string | null;
+  deliveredAt: string | null;
   status: OrderStatus;
   notes: string | null;
   createdAt: string;

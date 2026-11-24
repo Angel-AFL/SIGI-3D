@@ -99,6 +99,7 @@ export interface Database {
           unit_price: number;
           total: number;
           delivery_date: string | null;
+          delivered_at: string | null;
           status: string;
           notes: string | null;
           created_at: string;
@@ -115,6 +116,7 @@ export interface Database {
           unit_price?: number;
           total?: number;
           delivery_date?: string | null;
+          delivered_at?: string | null;
           status?: string;
           notes?: string | null;
           created_at?: string;
@@ -131,6 +133,7 @@ export interface Database {
           unit_price?: number;
           total?: number;
           delivery_date?: string | null;
+          delivered_at?: string | null;
           status?: string;
           notes?: string | null;
           created_at?: string;
