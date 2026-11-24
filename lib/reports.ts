@@ -99,7 +99,11 @@ function batchesForExport(
     .filter(
       (batch) =>
         isWithin(batch.createdAt, resolved.from, resolved.to) ||
-        isWithin(batch.finishedAt, resolved.from, resolved.to),
+        isWithin(
+          batch.finishedAt ?? batch.updatedAt,
+          resolved.from,
+          resolved.to,
+        ),
     )
     .sort((a, b) => a.code - b.code);
 }
