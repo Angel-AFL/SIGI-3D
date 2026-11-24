@@ -25,6 +25,7 @@ export function mapOrder(row: OrderRow): Order {
     unitPrice: row.unit_price,
     total: row.total,
     deliveryDate: row.delivery_date,
+    deliveredAt: row.delivered_at ?? null,
     status: toOrderStatus(row.status),
     notes: row.notes,
     createdAt: row.created_at,
