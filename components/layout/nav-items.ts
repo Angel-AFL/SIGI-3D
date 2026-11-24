@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   ClipboardList,
   Eye,
   Factory,
@@ -19,4 +20,5 @@ export const navItems: NavItem[] = [
   { href: "/pedidos", label: "Pedidos", icon: ClipboardList },
   { href: "/produccion", label: "Producción", icon: Factory },
   { href: "/modelos", label: "Visor 3D", icon: Eye },
+  { href: "/reportes", label: "Reportes", icon: BarChart3 },
 ];
