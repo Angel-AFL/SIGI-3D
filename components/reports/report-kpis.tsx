@@ -40,12 +40,16 @@ export function ReportKpis({ kpis }: { kpis: ReportKpisData }) {
     {
       icon: TrendingUp,
       label: "Margen bruto",
-      value: hasProduction
-        ? `${formatCurrency(kpis.grossMargin)} (${formatPercent(kpis.marginPercent)})`
-        : "—",
-      hint: hasProduction
-        ? "Ingresos menos costo estimado"
-        : "Sin lotes finalizados en el periodo",
+      value: !hasProduction
+        ? "—"
+        : kpis.revenue > 0
+          ? `${formatCurrency(kpis.grossMargin)} (${formatPercent(kpis.marginPercent)})`
+          : formatCurrency(kpis.grossMargin),
+      hint: !hasProduction
+        ? "Sin lotes finalizados en el periodo"
+        : kpis.revenue > 0
+          ? "Ingresos menos costo estimado"
+          : "Sin ingresos entregados en el periodo",
       tone: !hasProduction
         ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
         : positiveMargin
